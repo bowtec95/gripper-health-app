@@ -4,6 +4,8 @@ from openpyxl import load_workbook
 
 st.set_page_config(layout="wide")
 
+st.image("mujin logo.png", width=250)
+
 st.title("Gripper Health App")
 
 gripper_type = st.selectbox(
