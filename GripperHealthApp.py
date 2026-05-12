@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import streamlit.components.v1 as components
 from openpyxl import load_workbook
@@ -22,7 +23,10 @@ if gripper_type == "(Select)" or gripper_version == "(Select)":
 
 st.write(f"Selected: {gripper_version} {gripper_type}")
 
-uploaded_file = st.file_uploader("Upload spreadsheet file", type=["xlsx"])
+uploaded_file = st.file_uploader(
+    "Upload spreadsheet file",
+    type=["xlsx"]
+)
 
 TARGET_LOW = -40000
 TARGET_HIGH = -25000
@@ -50,6 +54,7 @@ def get_module_color(samples):
 module_colors = {}
 module_samples = {}
 
+# --- Analyze Spreadsheet ---
 if uploaded_file:
 
     wb = load_workbook(uploaded_file, data_only=True)
@@ -91,16 +96,16 @@ if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
     st.subheader(f"{gripper_version} {gripper_type} Layout")
 
     if gripper_type == "63 Channel Gripper":
+
         rows = 7
         cols = 9
-        total_modules = 63
         box_size = 40
         grid_height = 450
 
     else:
+
         rows = 5
         cols = 22
-        total_modules = 110
         box_size = 40
         grid_height = 360
 
@@ -120,7 +125,7 @@ if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
         for col in range(cols):
 
             # Bottom-right = 1
-            # Top-left = highest module number
+            # Top-left = highest number
             num = (rows - row) + ((cols - 1 - col) * rows)
 
             color = module_colors.get(num, "white")
@@ -145,6 +150,7 @@ if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
 
     components.html(html, height=grid_height)
 
+# --- Graph Section ---
 if uploaded_file:
 
     max_module = 110 if gripper_type == "Mega Gripper" else 63
@@ -194,7 +200,11 @@ if uploaded_file:
         point_spacing = 75
 
         def get_y(value):
-            return bottom_y - ((0 - value) / (0 - min_val) * chart_height)
+
+            return bottom_y - (
+                (0 - value) /
+                (0 - min_val) * chart_height
+            )
 
         points = []
 
@@ -209,11 +219,16 @@ if uploaded_file:
 
         target_top_y = get_y(TARGET_LOW)
         target_bottom_y = get_y(TARGET_HIGH)
-        target_height = target_bottom_y - target_top_y
+
+        target_height = (
+            target_bottom_y - target_top_y
+        )
 
         graph_html = f"""
-        <svg width="{graph_width}" height="{graph_height}"
-             style="border:1px solid black; background:#f9f9f9;">
+        <svg width="{graph_width}"
+             height="{graph_height}"
+             style="border:1px solid black;
+                    background:#f9f9f9;">
 
             <!-- Goal Window -->
             <rect x="{left_margin}"
@@ -224,12 +239,16 @@ if uploaded_file:
                   opacity="0.35" />
 
             <!-- Axes -->
-            <line x1="{left_margin}" y1="{bottom_y}"
-                  x2="620" y2="{bottom_y}"
+            <line x1="{left_margin}"
+                  y1="{bottom_y}"
+                  x2="620"
+                  y2="{bottom_y}"
                   stroke="black" />
 
-            <line x1="{left_margin}" y1="{top_margin}"
-                  x2="{left_margin}" y2="{bottom_y}"
+            <line x1="{left_margin}"
+                  y1="{top_margin}"
+                  x2="{left_margin}"
+                  y2="{bottom_y}"
                   stroke="black" />
 
             <!-- Data Line -->
@@ -247,22 +266,38 @@ if uploaded_file:
             y = get_y(value)
 
             graph_html += f"""
-            <circle cx="{x}" cy="{y}" r="4" fill="red" />
+            <circle cx="{x}"
+                    cy="{y}"
+                    r="4"
+                    fill="red" />
 
-            <text x="{x - 20}" y="{y - 10}" font-size="10">
-                {int(value)}
+            <text x="{x - 20}"
+                  y="{y - 10}"
+                  font-size="10">
+                  {int(value)}
             </text>
             """
 
-        x_labels = ["Start", "1", "2", "3", "4", "5", "6", "End"]
+        x_labels = [
+            "Start",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "End"
+        ]
 
         for i, label in enumerate(x_labels):
 
             x = left_margin + (i * point_spacing)
 
             graph_html += f"""
-            <text x="{x - 10}" y="390" font-size="12">
-                {label}
+            <text x="{x - 10}"
+                  y="390"
+                  font-size="12">
+                  {label}
             </text>
             """
 
@@ -286,7 +321,7 @@ if uploaded_file:
                   font-size="12">-40000</text>
 
         </svg>
-      
+        """
 
         components.html(graph_html, height=440)
 ```
