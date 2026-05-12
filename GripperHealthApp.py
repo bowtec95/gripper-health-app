@@ -29,7 +29,7 @@ if gripper_type == "(Select)" or gripper_version == "(Select)":
 
 st.write(f"Selected: {gripper_version} {gripper_type}")
 
-uploaded_file = st.file_uploader("Upload spreadsheet file", type=["xlsx"])
+uploaded_file = st.file_uploader("Upload spreadsheet file", type=["xlsx", "csv"])
 
 highlight_text = st.text_input(
     "Highlight specific modules",
@@ -194,37 +194,98 @@ def create_pdf_report():
     buffer.seek(0)
     return buffer
 
+def get_cell_value(ws, row, col):
+    return ws.cell(row=row, column=col).value
+
+def read_csv_to_rows(uploaded_file):
+    text = uploaded_file.getvalue().decode("utf-8")
+    rows = []
+
+    for line in text.splitlines():
+        row = line.split(",")
+        rows.append(row)
+
+    return rows
+
+def get_csv_value(rows, row, col):
+    try:
+        return rows[row - 1][col - 1]
+    except:
+        return None
+
 module_colors = {}
 module_samples = {}
 
 if uploaded_file:
-    wb = load_workbook(uploaded_file, data_only=True)
-    ws = wb.active
 
-    max_col = ws.max_column
+    file_name = uploaded_file.name.lower()
 
-    for col in range(2, max_col + 1):
-        module_name = ws.cell(row=1, column=col).value
+    if file_name.endswith(".csv"):
+        csv_rows = read_csv_to_rows(uploaded_file)
+        max_col = len(csv_rows[0])
 
-        try:
-            module_number = int(module_name)
-        except:
-            continue
+        start_col = 1 if gripper_type == "Mega Gripper" else 2
 
-        module_start = 2 + ((module_number - 1) * 6)
-        start_row = module_start - 1
-        end_row = module_start + 7
+        for col in range(start_col, max_col + 1):
 
-        samples = []
+            module_name = get_csv_value(csv_rows, 1, col)
 
-        for row in range(start_row, end_row):
-            value = ws.cell(row=row, column=col).value
+            try:
+                if gripper_type == "Mega Gripper":
+                    module_number = int(float(module_name)) + 1
+                else:
+                    module_number = int(float(module_name))
+            except:
+                continue
 
-            if value is not None:
-                samples.append(float(value))
+            module_start = 2 + ((module_number - 1) * 6)
+            start_row = module_start - 1
+            end_row = module_start + 7
 
-        module_samples[module_number] = samples
-        module_colors[module_number] = get_module_color(samples)
+            samples = []
+
+            for row in range(start_row, end_row):
+                value = get_csv_value(csv_rows, row, col)
+
+                if value is not None and value != "":
+                    samples.append(float(value))
+
+            module_samples[module_number] = samples
+            module_colors[module_number] = get_module_color(samples)
+
+    else:
+        wb = load_workbook(uploaded_file, data_only=True)
+        ws = wb.active
+        max_col = ws.max_column
+
+        start_col = 1 if gripper_type == "Mega Gripper" else 2
+
+        for col in range(start_col, max_col + 1):
+
+            module_name = get_cell_value(ws, 1, col)
+
+            try:
+                if gripper_type == "Mega Gripper":
+                    module_number = int(float(module_name)) + 1
+                else:
+                    module_number = int(float(module_name))
+            except:
+                continue
+
+            module_start = 2 + ((module_number - 1) * 6)
+            start_row = module_start - 1
+            end_row = module_start + 7
+
+            samples = []
+
+            for row in range(start_row, end_row):
+                value = get_cell_value(ws, row, col)
+
+                if value is not None:
+                    samples.append(float(value))
+
+            module_samples[module_number] = samples
+            module_colors[module_number] = get_module_color(samples)
 
     st.success("File uploaded and analyzed successfully")
 
