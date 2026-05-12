@@ -57,13 +57,16 @@ else:
 def get_module_color(samples):
     core_samples = samples[1:7]
 
+    min_target = min(TARGET_LOW, TARGET_HIGH)
+    max_target = max(TARGET_LOW, TARGET_HIGH)
+
     for index, value in enumerate(core_samples):
         try:
             value = float(value)
         except:
             continue
 
-        if TARGET_LOW <= value <= TARGET_HIGH:
+        if min_target <= value <= max_target:
             if index <= 1:
                 return "green"
             else:
