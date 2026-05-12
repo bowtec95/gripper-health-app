@@ -149,6 +149,8 @@ if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
 
     components.html(html, height=grid_height)
 
+    st.caption("Orientation: Front face of gripper")
+
 # --- Graph Section ---
 if uploaded_file:
 
