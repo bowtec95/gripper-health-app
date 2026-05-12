@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 import streamlit.components.v1 as components
 from openpyxl import load_workbook
@@ -324,4 +323,3 @@ if uploaded_file:
         """
 
         components.html(graph_html, height=440)
-```
