@@ -29,6 +29,23 @@ uploaded_file = st.file_uploader(
     type=["xlsx"]
 )
 
+# --- Highlight Modules ---
+highlight_text = st.text_input(
+    "Highlight specific modules",
+    placeholder="Example: 23,30,19,18"
+)
+
+highlight_modules = []
+
+if highlight_text:
+
+    for item in highlight_text.split(","):
+
+        try:
+            highlight_modules.append(int(item.strip()))
+        except:
+            pass
+
 # --- Pressure Ranges ---
 if gripper_type == "Mega Gripper":
 
@@ -146,11 +163,16 @@ if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
 
             color = module_colors.get(num, "white")
 
+            if num in highlight_modules:
+                border_style = "4px solid hotpink"
+            else:
+                border_style = "1px solid black"
+
             html += f"""
             <div style="
                 width: {box_size}px;
                 height: {box_size}px;
-                border: 1px solid black;
+                border: {border_style};
                 background-color: {color};
                 display: flex;
                 align-items: center;
