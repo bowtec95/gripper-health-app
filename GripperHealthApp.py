@@ -163,16 +163,20 @@ if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
 
             color = module_colors.get(num, "white")
 
+            # --- Highlight Style ---
             if num in highlight_modules:
-                border_style = "4px solid hotpink"
+                border_style = "1px solid black"
+                inner_shadow = "inset 0 0 0 4px hotpink"
             else:
                 border_style = "1px solid black"
+                inner_shadow = "none"
 
             html += f"""
             <div style="
                 width: {box_size}px;
                 height: {box_size}px;
                 border: {border_style};
+                box-shadow: {inner_shadow};
                 background-color: {color};
                 display: flex;
                 align-items: center;
