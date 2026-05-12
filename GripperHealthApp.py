@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import streamlit.components.v1 as components
 from openpyxl import load_workbook
@@ -96,12 +97,13 @@ if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
         total_modules = 63
         box_size = 40
         grid_height = 450
+
     else:
         rows = 5
         cols = 22
         total_modules = 110
-        box_size = 28
-        grid_height = 320
+        box_size = 40
+        grid_height = 360
 
     html = f"""
     <div style="
@@ -288,3 +290,4 @@ if uploaded_file:
         """
 
         components.html(graph_html, height=440)
+```
