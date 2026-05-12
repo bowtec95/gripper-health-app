@@ -29,8 +29,18 @@ uploaded_file = st.file_uploader(
     type=["xlsx"]
 )
 
-TARGET_LOW = -40000
-TARGET_HIGH = -25000
+# --- Pressure Ranges ---
+if gripper_type == "Mega Gripper":
+
+    TARGET_LOW = -500
+    TARGET_HIGH = -300
+    GRAPH_MIN = -700
+
+else:
+
+    TARGET_LOW = -40000
+    TARGET_HIGH = -25000
+    GRAPH_MIN = -70000
 
 def get_module_color(samples):
 
@@ -43,13 +53,18 @@ def get_module_color(samples):
         except:
             continue
 
+        # Within acceptable range
         if TARGET_LOW <= value <= TARGET_HIGH:
 
+            # Reached quickly
             if index <= 1:
                 return "green"
+
+            # Reached later
             else:
                 return "yellow"
 
+    # Never reached acceptable range
     return "red"
 
 module_colors = {}
@@ -191,7 +206,7 @@ if uploaded_file:
     if graph_samples:
 
         max_val = 0
-        min_val = -70000
+        min_val = GRAPH_MIN
 
         graph_width = 700
         graph_height = 420
@@ -313,15 +328,15 @@ if uploaded_file:
 
             <text x="5"
                   y="{top_margin + 5}"
-                  font-size="12">-70000</text>
+                  font-size="12">{GRAPH_MIN}</text>
 
             <text x="5"
                   y="{get_y(TARGET_HIGH)}"
-                  font-size="12">-25000</text>
+                  font-size="12">{TARGET_HIGH}</text>
 
             <text x="5"
                   y="{get_y(TARGET_LOW)}"
-                  font-size="12">-40000</text>
+                  font-size="12">{TARGET_LOW}</text>
 
         </svg>
         """
