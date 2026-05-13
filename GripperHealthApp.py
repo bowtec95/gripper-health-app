@@ -44,20 +44,35 @@ uploaded_file = st.file_uploader(
     type=["xlsx", "csv"]
 )
 
-# --- Highlight Modules ---
-highlight_text = st.text_input(
-    "Highlight specific modules",
-    placeholder="Example: 23,30,19,18"
+# --- More Actions Dropdown ---
+more_action = st.selectbox(
+    "More actions",
+    [
+        "(Select)",
+        "Highlight specific modules",
+        "Graph individual module",
+        "Export PDF report"
+    ]
 )
 
 highlight_modules = []
 
-if highlight_text:
-    for item in highlight_text.split(","):
-        try:
-            highlight_modules.append(int(item.strip()))
-        except:
-            pass
+# --- Highlight Modules ---
+if more_action == "Highlight specific modules":
+
+    highlight_text = st.text_input(
+        "Highlight specific modules",
+        placeholder="Example: 23,30,19,18"
+    )
+
+    if highlight_text:
+
+        for item in highlight_text.split(","):
+
+            try:
+                highlight_modules.append(int(item.strip()))
+            except:
+                pass
 
 # --- Pressure Targets ---
 if gripper_type == "Mega Gripper":
@@ -229,8 +244,6 @@ if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
     for row in range(rows):
         for col in range(cols):
 
-            # Bottom-right = 1
-            # Top-left = highest number
             num = (rows - row) + ((cols - 1 - col) * rows)
 
             color = module_colors.get(num, "white")
@@ -264,8 +277,8 @@ if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
 
     st.caption("Orientation: Front face of gripper")
 
-# --- Module Graph Section ---
-if uploaded_file:
+# --- Graph Individual Module ---
+if uploaded_file and more_action == "Graph individual module":
 
     max_module = 110 if gripper_type == "Mega Gripper" else 63
 
@@ -623,8 +636,8 @@ def create_pdf_report():
 
     return buffer
 
-# --- PDF Export Button ---
-if uploaded_file:
+# --- Export PDF Report ---
+if uploaded_file and more_action == "Export PDF report":
 
     st.download_button(
         label="Export PDF Report",
