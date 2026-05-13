@@ -103,7 +103,6 @@ def parse_highlight_modules(text):
 
     st.session_state.highlight_modules = modules
 
-
 # ==========================================
 # MODULE COLOR LOGIC
 # ==========================================
@@ -124,24 +123,18 @@ def get_module_color(samples):
             except:
                 continue
 
-            # ==================================
             # GREEN RANGE
-            # ==================================
             if -500 <= value <= -300:
 
-                # Fast response
                 if index <= 1:
 
                     return "green"
 
-                # Slow response
                 else:
 
                     return "yellow"
 
-            # ==================================
             # YELLOW WARNING RANGE
-            # ==================================
             elif (
                 -550 <= value < -500
                 or
@@ -187,21 +180,37 @@ def get_module_color(samples):
 
         return "red"
 
-
+# ==========================================
+# STATUS TEXT
+# ==========================================
 def get_status_text(status):
 
     if status == "green":
-        return "Reached acceptable pressure and maintained"
+
+        return (
+            "Reached acceptable pressure "
+            "and maintained"
+        )
 
     elif status == "yellow":
-        return "Delayed or warning pressure range"
+
+        return (
+            "Delayed or warning "
+            "pressure range"
+        )
 
     elif status == "red":
-        return "Failed to reach acceptable pressure"
+
+        return (
+            "Failed to reach acceptable "
+            "pressure"
+        )
 
     return "No data"
 
-
+# ==========================================
+# LAYOUT SETTINGS
+# ==========================================
 def get_layout_settings():
 
     if gripper_type == "63 Channel Gripper":
@@ -212,7 +221,9 @@ def get_layout_settings():
 
         return 5, 22, 40, 360
 
-
+# ==========================================
+# SHOW LAYOUT
+# ==========================================
 def show_gripper_layout():
 
     st.subheader(f"{gripper_type} Layout")
@@ -281,13 +292,18 @@ def show_gripper_layout():
 
     html += "</div>"
 
-    components.html(html, height=grid_height)
+    components.html(
+        html,
+        height=grid_height
+    )
 
     st.caption(
         "Orientation: Front face of gripper"
     )
 
-
+# ==========================================
+# ANALYZE FILE
+# ==========================================
 def analyze_uploaded_file(uploaded_file):
 
     st.session_state.module_colors = {}
@@ -295,9 +311,7 @@ def analyze_uploaded_file(uploaded_file):
 
     file_name = uploaded_file.name.lower()
 
-    # ======================================
     # CSV
-    # ======================================
     if file_name.endswith(".csv"):
 
         text = (
@@ -370,9 +384,7 @@ def analyze_uploaded_file(uploaded_file):
                 module_number
             ] = get_module_color(samples)
 
-    # ======================================
     # XLSX
-    # ======================================
     else:
 
         wb = load_workbook(
@@ -434,6 +446,64 @@ def analyze_uploaded_file(uploaded_file):
             st.session_state.module_colors[
                 module_number
             ] = get_module_color(samples)
+
+# ==========================================
+# CREATE PDF REPORT
+# ==========================================
+def create_pdf_report(
+    selected_site,
+    selected_robot_cell
+):
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter)
+    )
+
+    styles = getSampleStyleSheet()
+
+    story = []
+
+    story.append(
+        Paragraph(
+            "Gripper Health Report",
+            styles["Title"]
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"Site: {selected_site}",
+            styles["Normal"]
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"Robot Cell: "
+            f"{selected_robot_cell}",
+            styles["Normal"]
+        )
+    )
+
+    story.append(
+        Paragraph(
+            f"Gripper: {gripper_type}",
+            styles["Normal"]
+        )
+    )
+
+    story.append(
+        Spacer(1, 12)
+    )
+
+    doc.build(story)
+
+    buffer.seek(0)
+
+    return buffer
 
 # ==========================================
 # TABS
@@ -550,197 +620,6 @@ with tab3:
                 f"{get_status_text(status)}"
             )
 
-            graph_width = 700
-            graph_height = 420
-
-            left_margin = 70
-            top_margin = 30
-            bottom_y = 360
-            chart_height = 330
-            point_spacing = 75
-
-            def get_y(value):
-
-                return (
-                    bottom_y -
-                    (
-                        (0 - value) /
-                        (0 - GRAPH_MIN)
-                    ) * chart_height
-                )
-
-            points = []
-
-            for i, value in enumerate(
-                graph_samples
-            ):
-
-                x = (
-                    left_margin +
-                    (i * point_spacing)
-                )
-
-                y = get_y(value)
-
-                points.append(f"{x},{y}")
-
-            polyline_points = (
-                " ".join(points)
-            )
-
-            target_top_y = get_y(
-                TARGET_LOW
-            )
-
-            target_bottom_y = get_y(
-                TARGET_HIGH
-            )
-
-            target_height = (
-                target_bottom_y -
-                target_top_y
-            )
-
-            graph_html = f"""
-            <svg width="{graph_width}"
-                 height="{graph_height}"
-                 style="
-                    border:1px solid black;
-                    background:#f9f9f9;
-                 ">
-
-                <rect
-                    x="{left_margin}"
-                    y="{target_top_y}"
-                    width="560"
-                    height="{target_height}"
-                    fill="lightgreen"
-                    opacity="0.35"
-                />
-
-                <line
-                    x1="{left_margin}"
-                    y1="{bottom_y}"
-                    x2="620"
-                    y2="{bottom_y}"
-                    stroke="black"
-                />
-
-                <line
-                    x1="{left_margin}"
-                    y1="{top_margin}"
-                    x2="{left_margin}"
-                    y2="{bottom_y}"
-                    stroke="black"
-                />
-
-                <polyline
-                    points="{polyline_points}"
-                    fill="none"
-                    stroke="blue"
-                    stroke-width="3"
-                />
-            """
-
-            for i, value in enumerate(
-                graph_samples
-            ):
-
-                x = (
-                    left_margin +
-                    (i * point_spacing)
-                )
-
-                y = get_y(value)
-
-                graph_html += f"""
-                <circle
-                    cx="{x}"
-                    cy="{y}"
-                    r="4"
-                    fill="red"
-                />
-
-                <text
-                    x="{x - 20}"
-                    y="{y - 10}"
-                    font-size="10"
-                >
-                    {int(value)}
-                </text>
-                """
-
-            x_labels = [
-                "Start",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "End"
-            ]
-
-            for i, label in enumerate(
-                x_labels
-            ):
-
-                x = (
-                    left_margin +
-                    (i * point_spacing)
-                )
-
-                graph_html += f"""
-                <text
-                    x="{x - 10}"
-                    y="390"
-                    font-size="12"
-                >
-                    {label}
-                </text>
-                """
-
-            graph_html += f"""
-                <text
-                    x="25"
-                    y="{bottom_y}"
-                    font-size="12"
-                >
-                    0
-                </text>
-
-                <text
-                    x="5"
-                    y="{top_margin + 5}"
-                    font-size="12"
-                >
-                    {GRAPH_MIN}
-                </text>
-
-                <text
-                    x="5"
-                    y="{get_y(TARGET_HIGH)}"
-                    font-size="12"
-                >
-                    {TARGET_HIGH}
-                </text>
-
-                <text
-                    x="5"
-                    y="{get_y(TARGET_LOW)}"
-                    font-size="12"
-                >
-                    {TARGET_LOW}
-                </text>
-
-            </svg>
-            """
-
-            components.html(
-                graph_html,
-                height=440
-            )
-
     else:
 
         st.info(
@@ -752,7 +631,88 @@ with tab3:
 # ==========================================
 with tab4:
 
-    st.info(
-        "Export section unchanged. "
-        "Keep your existing export logic."
-    )
+    if st.session_state.module_samples:
+
+        site_robot_cells = {
+
+            "RG-DISTRIBUTION": [
+                "RC1"
+            ],
+
+            "PEPSI CARLISLE": [
+                "RC1",
+                "RC2",
+                "RC3"
+            ],
+
+            "ICC 7377": [
+                "RC1",
+                "RC2",
+                "RC3",
+                "RC4"
+            ],
+
+            "MARSHALLTOWN": [
+                "RC1"
+            ],
+
+            "BENTONVILLE": [
+                "RC1",
+                "RC2",
+                "RC3",
+                "RC4"
+            ],
+
+            "CALGARY": [
+                "RC1",
+                "RC2",
+                "RC3",
+                "RC4"
+            ],
+        }
+
+        selected_site = st.selectbox(
+            "Select Site",
+            ["(Select)"] +
+            list(
+                site_robot_cells.keys()
+            )
+        )
+
+        if selected_site != "(Select)":
+
+            selected_robot_cell = (
+                st.selectbox(
+                    "Select Robot Cell",
+                    ["(Select)"] +
+                    site_robot_cells[
+                        selected_site
+                    ]
+                )
+            )
+
+            if (
+                selected_robot_cell
+                != "(Select)"
+            ):
+
+                pdf_data = create_pdf_report(
+                    selected_site,
+                    selected_robot_cell
+                )
+
+                st.download_button(
+                    label=
+                        "Export PDF Report",
+                    data=pdf_data,
+                    file_name=
+                        "gripper_health_report.pdf",
+                    mime=
+                        "application/pdf"
+                )
+
+    else:
+
+        st.info(
+            "Upload and analyze data first."
+        )
