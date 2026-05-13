@@ -18,24 +18,27 @@ import base64
 
 st.set_page_config(layout="wide")
 
-# --- Header ---
+# ==========================================
+# HEADER
+# ==========================================
 logo_base64 = base64.b64encode(
     open("mujin logo.png", "rb").read()
 ).decode()
 
 header_html = f"""
 <div style="
-    display: flex;
-    align-items: center;
-    gap: 20px;
+    display:flex;
+    align-items:center;
+    gap:20px;
 ">
-    <img src="data:image/png;base64,{logo_base64}" width="220">
+    <img src="data:image/png;base64,{logo_base64}"
+         width="220">
 
     <div style="
-        color: orange;
-        font-size: 48px;
-        font-weight: bold;
-        font-family: Arial, sans-serif;
+        color:orange;
+        font-size:48px;
+        font-weight:bold;
+        font-family:Arial,sans-serif;
     ">
         Gripper Health App
     </div>
@@ -44,25 +47,25 @@ header_html = f"""
 
 components.html(header_html, height=120)
 
-# --- Gripper Selection ---
+# ==========================================
+# GRIPPER SELECTION
+# ==========================================
 gripper_type = st.selectbox(
     "Select Gripper Type",
-    ["(Select)", "63 Channel Gripper", "Mega Gripper"]
+    [
+        "(Select)",
+        "63 Channel Gripper",
+        "Mega Gripper"
+    ]
 )
 
 if gripper_type == "(Select)":
     st.warning("Please select a Gripper Type")
     st.stop()
 
-st.write(f"Selected: {gripper_type}")
-
-# --- Upload File ---
-uploaded_file = st.file_uploader(
-    "Upload spreadsheet file",
-    type=["xlsx", "csv"]
-)
-
-# --- Pressure Targets ---
+# ==========================================
+# TARGET RANGES
+# ==========================================
 if gripper_type == "Mega Gripper":
 
     TARGET_LOW = -500
@@ -75,7 +78,9 @@ else:
     TARGET_HIGH = -25000
     GRAPH_MIN = -70000
 
-# --- Module Color Logic ---
+# ==========================================
+# FUNCTIONS
+# ==========================================
 def get_module_color(samples):
 
     core_samples = samples[1:7]
@@ -94,12 +99,12 @@ def get_module_color(samples):
 
             if index <= 1:
                 return "green"
+
             else:
                 return "yellow"
 
     return "red"
 
-# --- Status Text ---
 def get_status_text(status):
 
     if status == "green":
@@ -113,100 +118,29 @@ def get_status_text(status):
 
     return "No data"
 
+# ==========================================
+# STORAGE
+# ==========================================
 module_colors = {}
 module_samples = {}
-
-# --- Analyze Spreadsheet ---
-if uploaded_file:
-
-    file_name = uploaded_file.name.lower()
-
-    # --- CSV ---
-    if file_name.endswith(".csv"):
-
-        text = uploaded_file.getvalue().decode("utf-8")
-        reader = csv.reader(io.StringIO(text))
-        rows = list(reader)
-
-        max_col = len(rows[0])
-
-        for col in range(1, max_col + 1):
-
-            try:
-                module_name = rows[0][col - 1]
-                module_number = int(float(module_name))
-            except:
-                continue
-
-            module_start = 2 + ((module_number - 1) * 6)
-
-            start_row = module_start - 1
-            end_row = module_start + 7
-
-            samples = []
-
-            for row in range(start_row, end_row):
-
-                try:
-                    value = rows[row - 1][col - 1]
-                except:
-                    value = None
-
-                if value not in [None, ""]:
-                    samples.append(float(value))
-
-            module_samples[module_number] = samples
-            module_colors[module_number] = get_module_color(samples)
-
-    # --- XLSX ---
-    else:
-
-        wb = load_workbook(uploaded_file, data_only=True)
-        ws = wb.active
-
-        max_col = ws.max_column
-
-        for col in range(1, max_col + 1):
-
-            module_name = ws.cell(row=1, column=col).value
-
-            try:
-                module_number = int(float(module_name))
-            except:
-                continue
-
-            module_start = 2 + ((module_number - 1) * 6)
-
-            start_row = module_start - 1
-            end_row = module_start + 7
-
-            samples = []
-
-            for row in range(start_row, end_row):
-
-                value = ws.cell(row=row, column=col).value
-
-                if value is not None:
-                    samples.append(float(value))
-
-            module_samples[module_number] = samples
-            module_colors[module_number] = get_module_color(samples)
-
-    st.success("File uploaded and analyzed successfully")
-
 highlight_modules = []
 
-# --- Tabs ---
-tab1, tab2, tab3 = st.tabs([
-    "Main",
+# ==========================================
+# TABS
+# ==========================================
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Layout",
+    "Analyze Data",
     "Graph Module",
     "Export Report"
 ])
 
-# =========================
-# TAB 1 - MAIN
-# =========================
+# ==========================================
+# TAB 1 - LAYOUT
+# ==========================================
 with tab1:
+
+    st.subheader(f"{gripper_type} Layout")
 
     highlight_text = st.text_input(
         "Highlight specific modules",
@@ -218,98 +152,263 @@ with tab1:
         for item in highlight_text.split(","):
 
             try:
-                highlight_modules.append(int(item.strip()))
+                highlight_modules.append(
+                    int(item.strip())
+                )
             except:
                 pass
 
-    # --- Gripper Layout ---
-    if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
+    if gripper_type == "63 Channel Gripper":
 
-        st.subheader(f"{gripper_type} Layout")
+        rows = 7
+        cols = 9
+        box_size = 40
+        grid_height = 450
 
-        if gripper_type == "63 Channel Gripper":
+    else:
 
-            rows = 7
-            cols = 9
-            box_size = 40
-            grid_height = 450
+        rows = 5
+        cols = 22
+        box_size = 40
+        grid_height = 360
 
-        else:
+    html = f"""
+    <div style="
+        display:grid;
+        grid-template-columns:
+            repeat({cols}, {box_size}px);
+        gap:6px;
+        padding:12px;
+        border:3px solid black;
+        width:max-content;
+        background-color:#f5f5f5;
+    ">
+    """
 
-            rows = 5
-            cols = 22
-            box_size = 40
-            grid_height = 360
+    for row in range(rows):
+        for col in range(cols):
 
-        html = f"""
-        <div style="
-            display: grid;
-            grid-template-columns: repeat({cols}, {box_size}px);
-            gap: 6px;
-            padding: 12px;
-            border: 3px solid black;
-            width: max-content;
-            background-color: #f5f5f5;
-        ">
-        """
+            num = (
+                (rows - row) +
+                ((cols - 1 - col) * rows)
+            )
 
-        for row in range(rows):
-            for col in range(cols):
+            color = module_colors.get(num, "white")
 
-                num = (rows - row) + ((cols - 1 - col) * rows)
+            if num in highlight_modules:
+                inner_shadow = (
+                    "inset 0 0 0 4px hotpink"
+                )
+            else:
+                inner_shadow = "none"
 
-                color = module_colors.get(num, "white")
+            html += f"""
+            <div style="
+                width:{box_size}px;
+                height:{box_size}px;
+                border:1px solid black;
+                box-shadow:{inner_shadow};
+                background-color:{color};
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:9px;
+                font-weight:bold;
+            ">
+            {num}
+            </div>
+            """
 
-                if num in highlight_modules:
-                    inner_shadow = "inset 0 0 0 4px hotpink"
-                else:
-                    inner_shadow = "none"
+    html += "</div>"
 
-                html += f"""
-                <div style="
-                    width: {box_size}px;
-                    height: {box_size}px;
-                    border: 1px solid black;
-                    box-shadow: {inner_shadow};
-                    background-color: {color};
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 9px;
-                    font-weight: bold;
-                ">
-                {num}
-                </div>
-                """
+    components.html(html, height=grid_height)
 
-        html += "</div>"
+    st.caption(
+        "Orientation: Front face of gripper"
+    )
 
-        components.html(html, height=grid_height)
-
-        st.caption("Orientation: Front face of gripper")
-
-# =========================
-# TAB 2 - GRAPH
-# =========================
+# ==========================================
+# TAB 2 - ANALYZE DATA
+# ==========================================
 with tab2:
+
+    uploaded_file = st.file_uploader(
+        "Upload spreadsheet file",
+        type=["xlsx", "csv"]
+    )
 
     if uploaded_file:
 
-        max_module = 110 if gripper_type == "Mega Gripper" else 63
+        file_name = uploaded_file.name.lower()
+
+        # ==========================
+        # CSV
+        # ==========================
+        if file_name.endswith(".csv"):
+
+            text = uploaded_file.getvalue().decode(
+                "utf-8"
+            )
+
+            reader = csv.reader(
+                io.StringIO(text)
+            )
+
+            rows_data = list(reader)
+
+            max_col = len(rows_data[0])
+
+            for col in range(1, max_col + 1):
+
+                try:
+
+                    module_name = (
+                        rows_data[0][col - 1]
+                    )
+
+                    module_number = int(
+                        float(module_name)
+                    )
+
+                except:
+                    continue
+
+                module_start = (
+                    2 +
+                    ((module_number - 1) * 6)
+                )
+
+                start_row = module_start - 1
+                end_row = module_start + 7
+
+                samples = []
+
+                for row in range(
+                    start_row,
+                    end_row
+                ):
+
+                    try:
+                        value = (
+                            rows_data[row - 1][col - 1]
+                        )
+                    except:
+                        value = None
+
+                    if value not in [None, ""]:
+
+                        samples.append(
+                            float(value)
+                        )
+
+                module_samples[
+                    module_number
+                ] = samples
+
+                module_colors[
+                    module_number
+                ] = get_module_color(samples)
+
+        # ==========================
+        # XLSX
+        # ==========================
+        else:
+
+            wb = load_workbook(
+                uploaded_file,
+                data_only=True
+            )
+
+            ws = wb.active
+
+            max_col = ws.max_column
+
+            for col in range(1, max_col + 1):
+
+                module_name = ws.cell(
+                    row=1,
+                    column=col
+                ).value
+
+                try:
+                    module_number = int(
+                        float(module_name)
+                    )
+
+                except:
+                    continue
+
+                module_start = (
+                    2 +
+                    ((module_number - 1) * 6)
+                )
+
+                start_row = module_start - 1
+                end_row = module_start + 7
+
+                samples = []
+
+                for row in range(
+                    start_row,
+                    end_row
+                ):
+
+                    value = ws.cell(
+                        row=row,
+                        column=col
+                    ).value
+
+                    if value is not None:
+
+                        samples.append(
+                            float(value)
+                        )
+
+                module_samples[
+                    module_number
+                ] = samples
+
+                module_colors[
+                    module_number
+                ] = get_module_color(samples)
+
+        st.success(
+            "File uploaded and analyzed successfully"
+        )
+
+# ==========================================
+# TAB 3 - GRAPH MODULE
+# ==========================================
+with tab3:
+
+    if module_samples:
+
+        max_module = (
+            110
+            if gripper_type == "Mega Gripper"
+            else 63
+        )
 
         selected_module = st.selectbox(
             "Select module to graph",
             list(range(1, max_module + 1))
         )
 
-        samples = module_samples.get(selected_module, [])
+        samples = module_samples.get(
+            selected_module,
+            []
+        )
 
         if len(samples) >= 7:
 
-            graph_samples = [0] + samples[1:7] + [0]
+            graph_samples = (
+                [0] +
+                samples[1:7] +
+                [0]
+            )
 
             st.subheader(
-                f"Module {selected_module} Pressure Readings"
+                f"Module {selected_module}"
             )
 
             status = module_colors.get(
@@ -317,9 +416,10 @@ with tab2:
                 "white"
             )
 
-            status_text = get_status_text(status)
-
-            st.write(f"Status: {status_text}")
+            st.write(
+                f"Status: "
+                f"{get_status_text(status)}"
+            )
 
             graph_width = 700
             graph_height = 420
@@ -332,27 +432,44 @@ with tab2:
 
             def get_y(value):
 
-                return bottom_y - (
-                    (0 - value) /
-                    (0 - GRAPH_MIN) * chart_height
+                return (
+                    bottom_y -
+                    (
+                        (0 - value) /
+                        (0 - GRAPH_MIN)
+                    ) * chart_height
                 )
 
             points = []
 
-            for i, value in enumerate(graph_samples):
+            for i, value in enumerate(
+                graph_samples
+            ):
 
-                x = left_margin + (i * point_spacing)
+                x = (
+                    left_margin +
+                    (i * point_spacing)
+                )
+
                 y = get_y(value)
 
                 points.append(f"{x},{y}")
 
-            polyline_points = " ".join(points)
+            polyline_points = (
+                " ".join(points)
+            )
 
-            target_top_y = get_y(TARGET_LOW)
-            target_bottom_y = get_y(TARGET_HIGH)
+            target_top_y = get_y(
+                TARGET_LOW
+            )
+
+            target_bottom_y = get_y(
+                TARGET_HIGH
+            )
 
             target_height = (
-                target_bottom_y - target_top_y
+                target_bottom_y -
+                target_top_y
             )
 
             graph_html = f"""
@@ -363,28 +480,31 @@ with tab2:
                     background:#f9f9f9;
                  ">
 
-                <!-- Goal Window -->
-                <rect x="{left_margin}"
-                      y="{target_top_y}"
-                      width="560"
-                      height="{target_height}"
-                      fill="lightgreen"
-                      opacity="0.35" />
+                <rect
+                    x="{left_margin}"
+                    y="{target_top_y}"
+                    width="560"
+                    height="{target_height}"
+                    fill="lightgreen"
+                    opacity="0.35"
+                />
 
-                <!-- Axes -->
-                <line x1="{left_margin}"
-                      y1="{bottom_y}"
-                      x2="620"
-                      y2="{bottom_y}"
-                      stroke="black" />
+                <line
+                    x1="{left_margin}"
+                    y1="{bottom_y}"
+                    x2="620"
+                    y2="{bottom_y}"
+                    stroke="black"
+                />
 
-                <line x1="{left_margin}"
-                      y1="{top_margin}"
-                      x2="{left_margin}"
-                      y2="{bottom_y}"
-                      stroke="black" />
+                <line
+                    x1="{left_margin}"
+                    y1="{top_margin}"
+                    x2="{left_margin}"
+                    y2="{bottom_y}"
+                    stroke="black"
+                />
 
-                <!-- Data Line -->
                 <polyline
                     points="{polyline_points}"
                     fill="none"
@@ -393,82 +513,50 @@ with tab2:
                 />
             """
 
-            for i, value in enumerate(graph_samples):
+            for i, value in enumerate(
+                graph_samples
+            ):
 
-                x = left_margin + (i * point_spacing)
+                x = (
+                    left_margin +
+                    (i * point_spacing)
+                )
+
                 y = get_y(value)
 
                 graph_html += f"""
-                <circle cx="{x}"
-                        cy="{y}"
-                        r="4"
-                        fill="red" />
+                <circle
+                    cx="{x}"
+                    cy="{y}"
+                    r="4"
+                    fill="red"
+                />
 
-                <text x="{x - 20}"
-                      y="{y - 10}"
-                      font-size="10">
-                      {int(value)}
+                <text
+                    x="{x - 20}"
+                    y="{y - 10}"
+                    font-size="10"
+                >
+                    {int(value)}
                 </text>
                 """
 
-            x_labels = [
-                "Start",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "End"
-            ]
+            graph_html += "</svg>"
 
-            for i, label in enumerate(x_labels):
+            components.html(
+                graph_html,
+                height=440
+            )
 
-                x = left_margin + (i * point_spacing)
+    else:
 
-                graph_html += f"""
-                <text x="{x - 10}"
-                      y="390"
-                      font-size="12">
-                      {label}
-                </text>
-                """
+        st.info(
+            "Upload and analyze data first."
+        )
 
-            graph_html += f"""
-
-                <!-- Y Labels -->
-                <text x="25"
-                      y="{bottom_y}"
-                      font-size="12">
-                      0
-                </text>
-
-                <text x="5"
-                      y="{top_margin + 5}"
-                      font-size="12">
-                      {GRAPH_MIN}
-                </text>
-
-                <text x="5"
-                      y="{get_y(TARGET_HIGH)}"
-                      font-size="12">
-                      {TARGET_HIGH}
-                </text>
-
-                <text x="5"
-                      y="{get_y(TARGET_LOW)}"
-                      font-size="12">
-                      {TARGET_LOW}
-                </text>
-
-            </svg>
-            """
-
-            components.html(graph_html, height=440)
-
-# =========================
-# PDF REPORT FUNCTION
-# =========================
+# ==========================================
+# PDF REPORT
+# ==========================================
 def create_pdf_report():
 
     buffer = BytesIO()
@@ -491,30 +579,53 @@ def create_pdf_report():
 
     story.append(Spacer(1, 12))
 
-    issue_rows = [
+    rows = [
         ["Module", "Status", "Reason"]
     ]
 
-    max_module = 110 if gripper_type == "Mega Gripper" else 63
+    max_module = (
+        110
+        if gripper_type == "Mega Gripper"
+        else 63
+    )
 
     for module in range(1, max_module + 1):
 
-        status = module_colors.get(module, "white")
+        status = module_colors.get(
+            module,
+            "white"
+        )
 
         if status in ["yellow", "red"]:
 
-            issue_rows.append([
+            rows.append([
                 str(module),
                 status.upper(),
                 get_status_text(status)
             ])
 
-    table = Table(issue_rows)
+    table = Table(rows)
 
     table.setStyle(TableStyle([
-        ("GRID", (0,0), (-1,-1), 1, colors.black),
-        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
-        ("FONTSIZE", (0,0), (-1,-1), 8),
+        (
+            "GRID",
+            (0,0),
+            (-1,-1),
+            1,
+            colors.black
+        ),
+        (
+            "BACKGROUND",
+            (0,0),
+            (-1,0),
+            colors.lightgrey
+        ),
+        (
+            "FONTSIZE",
+            (0,0),
+            (-1,-1),
+            8
+        ),
     ]))
 
     story.append(table)
@@ -525,16 +636,22 @@ def create_pdf_report():
 
     return buffer
 
-# =========================
-# TAB 3 - EXPORT
-# =========================
-with tab3:
+# ==========================================
+# TAB 4 - EXPORT
+# ==========================================
+with tab4:
 
-    if uploaded_file:
+    if module_samples:
 
         st.download_button(
             label="Export PDF Report",
             data=create_pdf_report(),
             file_name="gripper_health_report.pdf",
             mime="application/pdf"
+        )
+
+    else:
+
+        st.info(
+            "Upload and analyze data first."
         )
