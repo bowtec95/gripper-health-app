@@ -44,6 +44,21 @@ header_html = f"""
 
 components.html(header_html, height=120)
 
+# --- Top Action Bar ---
+left_space, action_col = st.columns([4, 1])
+
+with action_col:
+
+    more_action = st.selectbox(
+        "More actions",
+        [
+            "(Select)",
+            "Highlight specific modules",
+            "Graph individual module",
+            "Export PDF report"
+        ]
+    )
+
 # --- Gripper Selection ---
 gripper_type = st.selectbox(
     "Select Gripper Type",
@@ -60,17 +75,6 @@ st.write(f"Selected: {gripper_type}")
 uploaded_file = st.file_uploader(
     "Upload spreadsheet file",
     type=["xlsx", "csv"]
-)
-
-# --- More Actions ---
-more_action = st.selectbox(
-    "More actions",
-    [
-        "(Select)",
-        "Highlight specific modules",
-        "Graph individual module",
-        "Export PDF report"
-    ]
 )
 
 highlight_modules = []
@@ -120,13 +124,18 @@ def get_module_color(samples):
         except:
             continue
 
+        # Within target range
         if min_target <= value <= max_target:
 
+            # Fast response
             if index <= 1:
                 return "green"
+
+            # Delayed response
             else:
                 return "yellow"
 
+    # Never reached target
     return "red"
 
 # --- Status Text ---
