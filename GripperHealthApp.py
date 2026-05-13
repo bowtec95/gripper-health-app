@@ -23,27 +23,26 @@ logo_base64 = base64.b64encode(
     open("mujin logo.png", "rb").read()
 ).decode()
 
-st.markdown(
-    f"""
-    <div style="
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 20px;
-    ">
-        <img src="data:image/png;base64,{logo_base64}" width="220">
+header_html = f"""
+<div style="
+    display: flex;
+    align-items: center;
+    gap: 20px;
+">
+    <img src="data:image/png;base64,{logo_base64}" width="220">
 
-        <div style="
-            color: orange;
-            font-size: 48px;
-            font-weight: bold;
-        ">
-            Gripper Health App
-        </div>
+    <div style="
+        color: orange;
+        font-size: 48px;
+        font-weight: bold;
+        font-family: Arial, sans-serif;
+    ">
+        Gripper Health App
     </div>
-    """,
-    unsafe_allow_html=True
-)
+</div>
+"""
+
+components.html(header_html, height=120)
 
 # --- Gripper Selection ---
 gripper_type = st.selectbox(
@@ -68,7 +67,7 @@ uploaded_file = st.file_uploader(
     type=["xlsx", "csv"]
 )
 
-# --- More Actions Dropdown ---
+# --- More Actions ---
 more_action = st.selectbox(
     "More actions",
     [
@@ -126,13 +125,18 @@ def get_module_color(samples):
         except:
             continue
 
+        # Within target range
         if min_target <= value <= max_target:
 
+            # Fast response
             if index <= 1:
                 return "green"
+
+            # Delayed response
             else:
                 return "yellow"
 
+    # Never reached range
     return "red"
 
 # --- Status Text ---
