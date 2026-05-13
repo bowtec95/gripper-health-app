@@ -50,16 +50,11 @@ gripper_type = st.selectbox(
     ["(Select)", "63 Channel Gripper", "Mega Gripper"]
 )
 
-gripper_version = st.selectbox(
-    "Select Gripper Version",
-    ["(Select)", "V1", "V2", "V3"]
-)
-
-if gripper_type == "(Select)" or gripper_version == "(Select)":
-    st.warning("Please select both Gripper Type and Version")
+if gripper_type == "(Select)":
+    st.warning("Please select a Gripper Type")
     st.stop()
 
-st.write(f"Selected: {gripper_version} {gripper_type}")
+st.write(f"Selected: {gripper_type}")
 
 # --- Upload File ---
 uploaded_file = st.file_uploader(
@@ -125,18 +120,13 @@ def get_module_color(samples):
         except:
             continue
 
-        # Within target range
         if min_target <= value <= max_target:
 
-            # Fast response
             if index <= 1:
                 return "green"
-
-            # Delayed response
             else:
                 return "yellow"
 
-    # Never reached range
     return "red"
 
 # --- Status Text ---
@@ -237,7 +227,7 @@ if uploaded_file:
 # --- Gripper Layout ---
 if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
 
-    st.subheader(f"{gripper_version} {gripper_type} Layout")
+    st.subheader(f"{gripper_type} Layout")
 
     if gripper_type == "63 Channel Gripper":
 
@@ -492,7 +482,7 @@ def create_pdf_report():
 
     story.append(
         Paragraph(
-            f"Gripper: {gripper_version} {gripper_type}",
+            f"Gripper: {gripper_type}",
             styles["Normal"]
         )
     )
