@@ -56,9 +56,6 @@ if "module_samples" not in st.session_state:
 if "highlight_modules" not in st.session_state:
     st.session_state.highlight_modules = []
 
-module_colors = st.session_state.module_colors
-module_samples = st.session_state.module_samples
-
 # --- Functions ---
 def parse_highlight_modules(text):
     modules = []
@@ -131,7 +128,6 @@ def show_gripper_layout():
     for row in range(rows):
         for col in range(cols):
             num = (rows - row) + ((cols - 1 - col) * rows)
-
             color = st.session_state.module_colors.get(num, "white")
 
             if num in st.session_state.highlight_modules:
@@ -230,7 +226,7 @@ def analyze_uploaded_file(uploaded_file):
             st.session_state.module_colors[module_number] = get_module_color(samples)
 
 
-def create_pdf_report():
+def create_pdf_report(selected_site, selected_robot_cell):
     buffer = BytesIO()
 
     doc = SimpleDocTemplate(
@@ -242,6 +238,8 @@ def create_pdf_report():
     story = []
 
     story.append(Paragraph("Gripper Health Report", styles["Title"]))
+    story.append(Paragraph(f"Site: {selected_site}", styles["Normal"]))
+    story.append(Paragraph(f"Robot Cell: {selected_robot_cell}", styles["Normal"]))
     story.append(Paragraph(f"Gripper: {gripper_type}", styles["Normal"]))
     story.append(Paragraph(f"Target Range: {TARGET_LOW} to {TARGET_HIGH}", styles["Normal"]))
     story.append(Paragraph("Orientation: Front face of gripper", styles["Normal"]))
@@ -501,9 +499,29 @@ with tab3:
 # --- Tab 4: Export Report ---
 with tab4:
     if st.session_state.module_samples:
+
+        site_robot_cells = {
+            "RG-DISTRIBUTION": ["RC1"],
+            "PEPSI CARLISLE": ["RC1", "RC2", "RC3"],
+            "ICC 7377": ["RC1", "RC2", "RC3", "RC4"],
+            "MARSHALLTOWN": ["RC1"],
+            "BENTONVILLE": ["RC1", "RC2", "RC3", "RC4"],
+            "CALGARY": ["RC1", "RC2", "RC3", "RC4"],
+        }
+
+        selected_site = st.selectbox(
+            "Select Site",
+            list(site_robot_cells.keys())
+        )
+
+        selected_robot_cell = st.selectbox(
+            "Select Robot Cell",
+            site_robot_cells[selected_site]
+        )
+
         st.download_button(
             label="Export PDF Report",
-            data=create_pdf_report(),
+            data=create_pdf_report(selected_site, selected_robot_cell),
             file_name="gripper_health_report.pdf",
             mime="application/pdf"
         )
