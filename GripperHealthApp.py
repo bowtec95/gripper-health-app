@@ -23,25 +23,27 @@ logo_base64 = base64.b64encode(
     open("mujin logo.png", "rb").read()
 ).decode()
 
-st.markdown(f"""
-<div style="
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin-bottom: 20px;
-">
-    <img src="data:image/png;base64,{logo_base64}"
-         width="220">
-
-    <h1 style="
-        color: orange;
-        margin: 0;
-        font-size: 48px;
+st.markdown(
+    f"""
+    <div style="
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
     ">
-        Gripper Health App
-    </h1>
-</div>
-""", unsafe_allow_html=True)
+        <img src="data:image/png;base64,{logo_base64}" width="220">
+
+        <div style="
+            color: orange;
+            font-size: 48px;
+            font-weight: bold;
+        ">
+            Gripper Health App
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # --- Gripper Selection ---
 gripper_type = st.selectbox(
@@ -124,14 +126,10 @@ def get_module_color(samples):
         except:
             continue
 
-        # In acceptable range
         if min_target <= value <= max_target:
 
-            # Fast response
             if index <= 1:
                 return "green"
-
-            # Delayed response
             else:
                 return "yellow"
 
@@ -270,7 +268,6 @@ if gripper_type in ["63 Channel Gripper", "Mega Gripper"]:
 
             color = module_colors.get(num, "white")
 
-            # Highlight border
             if num in highlight_modules:
                 inner_shadow = "inset 0 0 0 4px hotpink"
             else:
