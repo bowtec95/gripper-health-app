@@ -103,114 +103,46 @@ def parse_highlight_modules(text):
 
     st.session_state.highlight_modules = modules
 
-# ==========================================
-# MODULE COLOR LOGIC
-# ==========================================
+
 def get_module_color(samples):
 
     core_samples = samples[1:7]
 
-    # ======================================
-    # MEGA GRIPPER LOGIC
-    # ======================================
-    if gripper_type == "Mega Gripper":
+    min_target = min(TARGET_LOW, TARGET_HIGH)
+    max_target = max(TARGET_LOW, TARGET_HIGH)
 
-        for index, value in enumerate(core_samples):
+    for index, value in enumerate(core_samples):
 
-            try:
-                value = float(value)
+        try:
+            value = float(value)
+        except:
+            continue
 
-            except:
-                continue
+        if min_target <= value <= max_target:
 
-            # GREEN RANGE
-            if -500 <= value <= -300:
+            if index <= 1:
+                return "green"
 
-                if index <= 1:
-
-                    return "green"
-
-                else:
-
-                    return "yellow"
-
-            # YELLOW WARNING RANGE
-            elif (
-                -550 <= value < -500
-                or
-                -300 < value <= -250
-            ):
-
+            else:
                 return "yellow"
 
-        return "red"
+    return "red"
 
-    # ======================================
-    # 63 CHANNEL LOGIC
-    # ======================================
-    else:
 
-        min_target = min(
-            TARGET_LOW,
-            TARGET_HIGH
-        )
-
-        max_target = max(
-            TARGET_LOW,
-            TARGET_HIGH
-        )
-
-        for index, value in enumerate(core_samples):
-
-            try:
-                value = float(value)
-
-            except:
-                continue
-
-            if min_target <= value <= max_target:
-
-                if index <= 1:
-
-                    return "green"
-
-                else:
-
-                    return "yellow"
-
-        return "red"
-
-# ==========================================
-# STATUS TEXT
-# ==========================================
 def get_status_text(status):
 
     if status == "green":
-
-        return (
-            "Reached acceptable pressure "
-            "and maintained"
-        )
+        return "Reached acceptable pressure and maintained"
 
     elif status == "yellow":
-
-        return (
-            "Delayed or warning "
-            "pressure range"
-        )
+        return "Delayed time in reaching acceptable pressure"
 
     elif status == "red":
-
-        return (
-            "Failed to reach acceptable "
-            "pressure"
-        )
+        return "Failed to reach acceptable pressure"
 
     return "No data"
 
-# ==========================================
-# LAYOUT SETTINGS
-# ==========================================
+
 def get_layout_settings():
 
     if gripper_type == "63 Channel Gripper":
@@ -221,9 +153,7 @@ def get_layout_settings():
 
         return 5, 22, 40, 360
 
-# ==========================================
-# SHOW LAYOUT
-# ==========================================
+
 def show_gripper_layout():
 
     st.subheader(f"{gripper_type} Layout")
@@ -292,18 +222,13 @@ def show_gripper_layout():
 
     html += "</div>"
 
-    components.html(
-        html,
-        height=grid_height
-    )
+    components.html(html, height=grid_height)
 
     st.caption(
         "Orientation: Front face of gripper"
     )
 
-# ==========================================
-# ANALYZE FILE
-# ==========================================
+
 def analyze_uploaded_file(uploaded_file):
 
     st.session_state.module_colors = {}
@@ -311,7 +236,9 @@ def analyze_uploaded_file(uploaded_file):
 
     file_name = uploaded_file.name.lower()
 
+    # ======================================
     # CSV
+    # ======================================
     if file_name.endswith(".csv"):
 
         text = (
@@ -384,7 +311,9 @@ def analyze_uploaded_file(uploaded_file):
                 module_number
             ] = get_module_color(samples)
 
+    # ======================================
     # XLSX
+    # ======================================
     else:
 
         wb = load_workbook(
@@ -447,9 +376,7 @@ def analyze_uploaded_file(uploaded_file):
                 module_number
             ] = get_module_color(samples)
 
-# ==========================================
-# CREATE PDF REPORT
-# ==========================================
+
 def create_pdf_report(
     selected_site,
     selected_robot_cell
@@ -496,8 +423,276 @@ def create_pdf_report(
     )
 
     story.append(
-        Spacer(1, 12)
+        Paragraph(
+            f"Target Range: "
+            f"{TARGET_LOW} to {TARGET_HIGH}",
+            styles["Normal"]
+        )
     )
+
+    story.append(
+        Paragraph(
+            "Orientation: Front face "
+            "of gripper",
+            styles["Normal"]
+        )
+    )
+
+    story.append(Spacer(1, 12))
+
+    # ======================================
+    # LAYOUT TABLE
+    # ======================================
+    story.append(
+        Paragraph(
+            "Gripper Layout",
+            styles["Heading2"]
+        )
+    )
+
+    rows, cols, _, _ = get_layout_settings()
+
+    layout_data = []
+
+    for row in range(rows):
+
+        row_data = []
+
+        for col in range(cols):
+
+            num = (
+                (rows - row) +
+                ((cols - 1 - col) * rows)
+            )
+
+            row_data.append(str(num))
+
+        layout_data.append(row_data)
+
+    layout_table = Table(layout_data)
+
+    layout_style = [
+        (
+            "GRID",
+            (0,0),
+            (-1,-1),
+            0.5,
+            colors.black
+        ),
+        (
+            "ALIGN",
+            (0,0),
+            (-1,-1),
+            "CENTER"
+        ),
+        (
+            "VALIGN",
+            (0,0),
+            (-1,-1),
+            "MIDDLE"
+        ),
+        (
+            "FONTSIZE",
+            (0,0),
+            (-1,-1),
+            7
+        ),
+    ]
+
+    for row in range(rows):
+        for col in range(cols):
+
+            num = (
+                (rows - row) +
+                ((cols - 1 - col) * rows)
+            )
+
+            status = (
+                st.session_state.module_colors.get(
+                    num,
+                    "white"
+                )
+            )
+
+            if status == "green":
+
+                bg_color = colors.lightgreen
+
+            elif status == "yellow":
+
+                bg_color = colors.yellow
+
+            elif status == "red":
+
+                bg_color = colors.red
+
+            else:
+
+                bg_color = colors.white
+
+            layout_style.append(
+                (
+                    "BACKGROUND",
+                    (col,row),
+                    (col,row),
+                    bg_color
+                )
+            )
+
+            if (
+                num in
+                st.session_state.highlight_modules
+            ):
+
+                layout_style.append(
+                    (
+                        "BOX",
+                        (col,row),
+                        (col,row),
+                        2,
+                        colors.magenta
+                    )
+                )
+
+    layout_table.setStyle(
+        TableStyle(layout_style)
+    )
+
+    story.append(layout_table)
+
+    story.append(Spacer(1, 16))
+
+    # ======================================
+    # ISSUES TABLE
+    # ======================================
+    story.append(
+        Paragraph(
+            "Modules Requiring Attention",
+            styles["Heading2"]
+        )
+    )
+
+    rows_data = [
+        [
+            "Module",
+            "Status",
+            "Reason",
+            "Samples"
+        ]
+    ]
+
+    max_module = (
+        110
+        if gripper_type == "Mega Gripper"
+        else 63
+    )
+
+    for module in range(1, max_module + 1):
+
+        status = (
+            st.session_state.module_colors.get(
+                module,
+                "white"
+            )
+        )
+
+        if status in ["yellow", "red"]:
+
+            samples = (
+                st.session_state.module_samples.get(
+                    module,
+                    []
+                )
+            )
+
+            rows_data.append([
+                str(module),
+                status.upper(),
+                get_status_text(status),
+                str(samples[1:7])
+            ])
+
+    if len(rows_data) == 1:
+
+        story.append(
+            Paragraph(
+                "No delayed or failed "
+                "modules found.",
+                styles["Normal"]
+            )
+        )
+
+    else:
+
+        table = Table(
+            rows_data,
+            colWidths=[60,80,240,300]
+        )
+
+        table.setStyle(TableStyle([
+            (
+                "GRID",
+                (0,0),
+                (-1,-1),
+                1,
+                colors.black
+            ),
+            (
+                "BACKGROUND",
+                (0,0),
+                (-1,0),
+                colors.lightgrey
+            ),
+            (
+                "FONTSIZE",
+                (0,0),
+                (-1,-1),
+                8
+            ),
+            (
+                "VALIGN",
+                (0,0),
+                (-1,-1),
+                "TOP"
+            ),
+        ]))
+
+        story.append(table)
+
+    # ======================================
+    # MANUAL FLAGS
+    # ======================================
+    story.append(Spacer(1, 16))
+
+    story.append(
+        Paragraph(
+            "Manually Flagged Modules "
+            "for Inspection",
+            styles["Heading2"]
+        )
+    )
+
+    if st.session_state.highlight_modules:
+
+        story.append(
+            Paragraph(
+                ", ".join(
+                    str(x)
+                    for x in
+                    st.session_state.highlight_modules
+                ),
+                styles["Normal"]
+            )
+        )
+
+    else:
+
+        story.append(
+            Paragraph(
+                "None",
+                styles["Normal"]
+            )
+        )
 
     doc.build(story)
 
@@ -618,6 +813,197 @@ with tab3:
             st.write(
                 f"Status: "
                 f"{get_status_text(status)}"
+            )
+
+            graph_width = 700
+            graph_height = 420
+
+            left_margin = 70
+            top_margin = 30
+            bottom_y = 360
+            chart_height = 330
+            point_spacing = 75
+
+            def get_y(value):
+
+                return (
+                    bottom_y -
+                    (
+                        (0 - value) /
+                        (0 - GRAPH_MIN)
+                    ) * chart_height
+                )
+
+            points = []
+
+            for i, value in enumerate(
+                graph_samples
+            ):
+
+                x = (
+                    left_margin +
+                    (i * point_spacing)
+                )
+
+                y = get_y(value)
+
+                points.append(f"{x},{y}")
+
+            polyline_points = (
+                " ".join(points)
+            )
+
+            target_top_y = get_y(
+                TARGET_LOW
+            )
+
+            target_bottom_y = get_y(
+                TARGET_HIGH
+            )
+
+            target_height = (
+                target_bottom_y -
+                target_top_y
+            )
+
+            graph_html = f"""
+            <svg width="{graph_width}"
+                 height="{graph_height}"
+                 style="
+                    border:1px solid black;
+                    background:#f9f9f9;
+                 ">
+
+                <rect
+                    x="{left_margin}"
+                    y="{target_top_y}"
+                    width="560"
+                    height="{target_height}"
+                    fill="lightgreen"
+                    opacity="0.35"
+                />
+
+                <line
+                    x1="{left_margin}"
+                    y1="{bottom_y}"
+                    x2="620"
+                    y2="{bottom_y}"
+                    stroke="black"
+                />
+
+                <line
+                    x1="{left_margin}"
+                    y1="{top_margin}"
+                    x2="{left_margin}"
+                    y2="{bottom_y}"
+                    stroke="black"
+                />
+
+                <polyline
+                    points="{polyline_points}"
+                    fill="none"
+                    stroke="blue"
+                    stroke-width="3"
+                />
+            """
+
+            for i, value in enumerate(
+                graph_samples
+            ):
+
+                x = (
+                    left_margin +
+                    (i * point_spacing)
+                )
+
+                y = get_y(value)
+
+                graph_html += f"""
+                <circle
+                    cx="{x}"
+                    cy="{y}"
+                    r="4"
+                    fill="red"
+                />
+
+                <text
+                    x="{x - 20}"
+                    y="{y - 10}"
+                    font-size="10"
+                >
+                    {int(value)}
+                </text>
+                """
+
+            x_labels = [
+                "Start",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "End"
+            ]
+
+            for i, label in enumerate(
+                x_labels
+            ):
+
+                x = (
+                    left_margin +
+                    (i * point_spacing)
+                )
+
+                graph_html += f"""
+                <text
+                    x="{x - 10}"
+                    y="390"
+                    font-size="12"
+                >
+                    {label}
+                </text>
+                """
+
+            graph_html += f"""
+                <text
+                    x="25"
+                    y="{bottom_y}"
+                    font-size="12"
+                >
+                    0
+                </text>
+
+                <text
+                    x="5"
+                    y="{top_margin + 5}"
+                    font-size="12"
+                >
+                    {GRAPH_MIN}
+                </text>
+
+                <text
+                    x="5"
+                    y="{get_y(TARGET_HIGH)}"
+                    font-size="12"
+                >
+                    {TARGET_HIGH}
+                </text>
+
+                <text
+                    x="5"
+                    y="{get_y(TARGET_LOW)}"
+                    font-size="12"
+                >
+                    {TARGET_LOW}
+                </text>
+
+            </svg>
+            """
+
+            components.html(
+                graph_html,
+                height=440
             )
 
     else:
