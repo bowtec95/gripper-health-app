@@ -14,12 +14,34 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 import csv
 import io
+import base64
 
 st.set_page_config(layout="wide")
 
-st.image("mujin logo.png", width=250)
+# --- Header ---
+logo_base64 = base64.b64encode(
+    open("mujin logo.png", "rb").read()
+).decode()
 
-st.title("Gripper Health App")
+st.markdown(f"""
+<div style="
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+">
+    <img src="data:image/png;base64,{logo_base64}"
+         width="220">
+
+    <h1 style="
+        color: orange;
+        margin: 0;
+        font-size: 48px;
+    ">
+        Gripper Health App
+    </h1>
+</div>
+""", unsafe_allow_html=True)
 
 # --- Gripper Selection ---
 gripper_type = st.selectbox(
