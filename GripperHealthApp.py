@@ -63,8 +63,8 @@ if gripper_type == "(Select)":
 # ==========================================
 if gripper_type == "Mega Gripper":
 
-    TARGET_LOW = -500
-    TARGET_HIGH = -300
+    TARGET_LOW = -550
+    TARGET_HIGH = -250
     GRAPH_MIN = -700
 
 else:
