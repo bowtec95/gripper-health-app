@@ -154,6 +154,26 @@ def get_layout_settings():
         return 5, 22, 40, 360
 
 
+def get_module_number(row, col, rows, cols):
+
+    if gripper_type == "Mega Gripper":
+
+        # Mega Gripper numbering:
+        # Bottom row runs from 22 on the left to 1 on the right.
+        # Each row above continues the sequence from right to left.
+        # The top row runs from 110 on the left to 89 on the right.
+        return (
+            ((rows - 1 - row) * cols) +
+            (cols - col)
+        )
+
+    # Preserve the original 63 Channel Gripper numbering.
+    return (
+        (rows - row) +
+        ((cols - 1 - col) * rows)
+    )
+
+
 def show_gripper_layout():
 
     st.subheader(f"{gripper_type} Layout")
@@ -178,9 +198,11 @@ def show_gripper_layout():
     for row in range(rows):
         for col in range(cols):
 
-            num = (
-                (rows - row) +
-                ((cols - 1 - col) * rows)
+            num = get_module_number(
+                row,
+                col,
+                rows,
+                cols
             )
 
             color = (
@@ -460,9 +482,11 @@ def create_pdf_report(
 
         for col in range(cols):
 
-            num = (
-                (rows - row) +
-                ((cols - 1 - col) * rows)
+            num = get_module_number(
+                row,
+                col,
+                rows,
+                cols
             )
 
             row_data.append(str(num))
@@ -502,9 +526,11 @@ def create_pdf_report(
     for row in range(rows):
         for col in range(cols):
 
-            num = (
-                (rows - row) +
-                ((cols - 1 - col) * rows)
+            num = get_module_number(
+                row,
+                col,
+                rows,
+                cols
             )
 
             status = (
