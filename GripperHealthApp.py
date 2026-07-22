@@ -178,10 +178,10 @@ def show_gripper_layout():
     for row in range(rows):
         for col in range(cols):
 
-          num = (
-    (rows - row) +
-    ((cols - 1 - col) * rows)
-)
+            num = (
+                (rows - row) +
+                ((cols - 1 - col) * rows)
+            )
 
             color = (
                 st.session_state.module_colors.get(
